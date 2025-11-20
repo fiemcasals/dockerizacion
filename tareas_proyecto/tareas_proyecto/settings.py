@@ -163,3 +163,14 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_REVOKE_TOKENS_ON_DISCONNECT = True
 #   CLAVE AUTOMÁTICA
 # ==============================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+#agregado para dockerizar
+
+# 👇 Esto sirve tus archivos CSS/JS en modo dev y docker (si existen en /static/)
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+# 👇 ESTA ES LA LÍNEA QUE TE FALTABA
+STATIC_ROOT = BASE_DIR / "staticfiles"

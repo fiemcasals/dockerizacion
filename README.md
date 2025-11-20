@@ -200,15 +200,6 @@ docker compose down
 
 ---
 
-## 🎉 Resultado Final
-
-Después de seguir esta guía, ahora tu proyecto:
-
-✔ Funciona dentro de Docker
-✔ Usa PostgreSQL en vez de SQLite
-✔ Es portable y se puede desplegar en cualquier servidor o VPS
-
----
 
 ### 📎 Próximo paso sugerido:
 
@@ -216,7 +207,7 @@ Después de seguir esta guía, ahora tu proyecto:
 
 ---
 
-#cuando hacer un built desp de una modificacion:
+#cuando modifican el docker-compose o el Dockerfile o el requirements.txt antes de hacer docker compose build, deben hacer docker compose down
 
 📌 Regla general:
 Qué cambiaste           	¿Necesita rebuild?      	¿Necesita bajar todo?
@@ -229,3 +220,7 @@ docker-compose.yml  		⚠ Depende (si cambian puertos/volúmenes/env)	muchas vec
 #posibles errores:
 
 el docker up lo levanta en el puerto 0.0.0.0 -> necesitamos tener en settings.py "ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '0.0.0.0']"
+
+#tiene que cambiar el nombre de la aplicacion en el Dockerfile por el suyo: cambiar tareas_proyecto por el de ustedes
+ Comando que ejecutará el contenedor al iniciar
+CMD ["gunicorn", "tareas_proyecto.wsgi:application", "--bind", "0.0.0.0:8000"]
