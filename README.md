@@ -43,6 +43,7 @@ Crear archivo: `Dockerfile` en la raíz del proyecto (junto a `manage.py`):
 #   - El comando para ejecutar el servidor
 # ============================================================
 
+
 # 1) Imagen base:
 #    Partimos de una imagen oficial de Python 3.12 basada en Debian "slim" (más liviana).
 FROM python:3.12-slim
@@ -66,17 +67,31 @@ RUN apt-get update && apt-get install -y \
 # 5) Copiamos SOLO el requirements.txt primero para usar cache de Docker
 COPY requirements.txt /app/
 
+# ⚠️ Asegurate de que en requirements.txt esté includo:
+# whitenoise
+
 # 6) Instalamos las dependencias del proyecto
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 7) Ahora copiamos TODO el proyecto al contenedor
 COPY . /app/
 
+# (Opcional pero recomendado para producción)
+# Si tus variables de entorno (SECRET_KEY, DEBUG, DB_*) ya están disponibles en build,
+# podés descomentar esta línea para que se ejecute collectstatic en el build:
+#
+# RUN python manage.py collectstatic --noinput
+#
+# Si preferís hacerlo después de levantar el contenedor, dejala comentada
+# y usá:
+#   docker exec -it tareas_web python manage.py collectstatic --noinput
+
 # 8) Exponemos puerto donde corre Django dentro del contenedor
 EXPOSE 8000
 
 # 9) Comando que ejecutará el contenedor al iniciar
-CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+CMD ["gunicorn", "tareas_proyecto.wsgi:application", "--bind", "0.0.0.0:8000"]
+
 ````
 
 ---
@@ -93,7 +108,7 @@ Este archivo permite levantar **varios servicios al mismo tiempo**, por ejemplo:
 Crear archivo en la raíz:
 
 ```yaml
-version: "3.9"
+
 
 services:
   db:
@@ -128,7 +143,6 @@ services:
 
 volumes:
   postgres_data:
-```
 
 ---
 
@@ -224,3 +238,77 @@ el docker up lo levanta en el puerto 0.0.0.0 -> necesitamos tener en settings.py
 #tiene que cambiar el nombre de la aplicacion en el Dockerfile por el suyo: cambiar tareas_proyecto por el de ustedes
  Comando que ejecutará el contenedor al iniciar
 CMD ["gunicorn", "tareas_proyecto.wsgi:application", "--bind", "0.0.0.0:8000"]
+
+
+problema con los estaticos:
+
+## 1️⃣ Ejecutar `collectstatic` directamente en el contenedor
+
+Usá este comando, cambiando 'tareas_web' por el nombre de tu aplicacion:
+
+```bash
+docker exec -it tareas_web python manage.py collectstatic --noinput
+```
+
+
+Si querés primero entrar al contenedor y después ejecutarlo:
+
+```bash
+docker exec -it tareas_web bash
+# ya dentro
+python manage.py collectstatic --noinput
+exit
+```
+
+Con eso se va a generar la carpeta `staticfiles` **dentro del contenedor**, usando lo que pusiste en `STATIC_ROOT`.
+
+---
+
+## 2️⃣ Recordatorio de `settings.py` (para que funcione bien)
+
+Asegurate de tener algo así:
+
+```python
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+STATIC_URL = "/static/"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+```
+
+
+## comandos en terminal"
+
+Aplicar migraciones:
+
+docker exec -it tareas_web python manage.py migrate
+
+
+Ejecutar collectstatic (genera/actualiza staticfiles/ dentro del contenedor):
+
+docker exec -it tareas_web python manage.py collectstatic --noinput
+
+
+## cuando cambias estaticos: 
+
+5. ¿Qué hacer cuando cambias CSS/JS?
+
+Cada vez que cambies algo en static/:
+
+Volvés a generar estáticos:
+
+docker exec -it tareas_web python manage.py collectstatic --noinput
+
+
+Si hiciste cambios grandes de código y querés reconstruir todo:
+
+docker compose down
+docker compose up -d --build
+docker exec -it tareas_web python manage.py collectstatic --noinput
+

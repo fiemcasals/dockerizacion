@@ -1,4 +1,3 @@
-
 # 1) Imagen base:
 #    Partimos de una imagen oficial de Python 3.12 basada en Debian "slim" (más liviana).
 FROM python:3.12-slim
@@ -22,11 +21,24 @@ RUN apt-get update && apt-get install -y \
 # 5) Copiamos SOLO el requirements.txt primero para usar cache de Docker
 COPY requirements.txt /app/
 
+# ⚠️ Asegurate de que en requirements.txt esté includo:
+# whitenoise
+
 # 6) Instalamos las dependencias del proyecto
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 7) Ahora copiamos TODO el proyecto al contenedor
 COPY . /app/
+
+# (Opcional pero recomendado para producción)
+# Si tus variables de entorno (SECRET_KEY, DEBUG, DB_*) ya están disponibles en build,
+# podés descomentar esta línea para que se ejecute collectstatic en el build:
+#
+# RUN python manage.py collectstatic --noinput
+#
+# Si preferís hacerlo después de levantar el contenedor, dejala comentada
+# y usá:
+#   docker exec -it tareas_web python manage.py collectstatic --noinput
 
 # 8) Exponemos puerto donde corre Django dentro del contenedor
 EXPOSE 8000

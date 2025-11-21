@@ -15,7 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 #   VARIABLES DE ENTORNO
 # ==============================
 SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '0.0.0.0']
 
 
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
 
     # Login con Google
     'social_django',
+    
 ]
 
 # ==============================
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
 # ==============================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -127,11 +129,7 @@ USE_L10N = True
 USE_TZ = True
 LOCALE_PATHS = [BASE_DIR / 'locale']
 
-# ==============================
-#   ARCHIVOS ESTÁTICOS
-# ==============================
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+
 
 # ==============================
 #   LOGIN / LOGOUT
@@ -167,10 +165,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 #agregado para dockerizar
 
-# 👇 Esto sirve tus archivos CSS/JS en modo dev y docker (si existen en /static/)
+# ==============================
+#   ARCHIVOS ESTÁTICOS
+# ==============================
+STATIC_URL = "/static/"   # 👈 mejor con barra inicial y final
+
 STATICFILES_DIRS = [
-    BASE_DIR / "static",
+    BASE_DIR / "static",   # 👈 esto está bien
 ]
 
-# 👇 ESTA ES LA LÍNEA QUE TE FALTABA
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = BASE_DIR / "staticfiles"  # 👈 para collectstatic
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage" #para estaticos
